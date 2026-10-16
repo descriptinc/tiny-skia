@@ -654,9 +654,13 @@ fn clip_color(r: &mut f32x8, g: &mut f32x8, b: &mut f32x8, a: f32x8) {
     let mx = r.max(g.max(*b));
     let l  = lum(*r, *g, *b);
 
+    // Matches Skia's clip_color: pull channels up when the minimum goes negative and down when
+    // the maximum exceeds alpha, skipping each when lum already equals that extreme.
+    let clip_low = mn.cmp_lt(f32x8::default()) & l.cmp_ne(mn);
+    let clip_high = mx.cmp_gt(a) & l.cmp_ne(mx);
     let clip = |mut c| {
-        c = mx.cmp_ge(f32x8::default()).blend(c, l + (c - l) * l / (l - mn));
-        c = mx.cmp_gt(a).blend(l + (c - l) * (a - l) / (mx - l), c);
+        c = clip_low.blend(l + (c - l) * l / (l - mn), c);
+        c = clip_high.blend(l + (c - l) * (a - l) / (mx - l), c);
         c = c.max(f32x8::default()); // Sometimes without this we may dip just a little negative.
         c
     };

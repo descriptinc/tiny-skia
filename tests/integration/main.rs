@@ -1,3 +1,4 @@
+#[rustfmt::skip] mod blend;
 #[rustfmt::skip] mod mask;
 #[rustfmt::skip] mod dash;
 #[rustfmt::skip] mod fill;
